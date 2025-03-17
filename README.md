@@ -59,4 +59,15 @@ install.packages(c("plm", "ggplot2", "dplyr", "lmtest", "car", "readr", "ggplot"
 2. Exécutez le fichier sub_saharan_africa_esperance.rmd dans RStudio pour générer les résultats.
 
 
+## Structure du Dépôt
 
+Ce dépôt est organisé comme suit :
+
+- **`data/`** : Ce dossier contient les données utilisées pour l'analyse. Les fichiers de données sont issus de Kaggle et ont été filtrés pour inclure les pays de la région subsaharienne et plusieurs années.
+  
+- **`sub_saharan_africa_esperance.Rmd`** : Ce fichier R Markdown contient l'analyse des données. Il inclut la modélisation statistique et l'identification des facteurs influençant l'espérance de vie en Afrique subsaharienne.
+
+- **`README.md`** : Ce fichier contient une description du projet, les objectifs, la méthodologie et la structure du dépôt.
+
+## Auteurs
+- Naofal AKANHO
