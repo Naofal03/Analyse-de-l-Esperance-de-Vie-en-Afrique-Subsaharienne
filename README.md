@@ -67,6 +67,8 @@ Ce dépôt est organisé comme suit :
   
 - **`sub_saharan_africa_esperance.Rmd`** : Ce fichier R Markdown contient l'analyse des données. Il inclut la modélisation statistique et l'identification des facteurs influençant l'espérance de vie en Afrique subsaharienne.
 
+- **`sub_saharan_africa_esperance.html`** : Ce fichier HTML est généré à partir du fichier **`sub_saharan_africa_esperance.Rmd`** et contient les résultats détaillés de l'analyse, y compris les visualisations et les conclusions principales sur l'espérance de vie en Afrique subsaharienne.
+
 - **`README.md`** : Ce fichier contient une description du projet, les objectifs, la méthodologie et la structure du dépôt.
 
 ## Auteurs
