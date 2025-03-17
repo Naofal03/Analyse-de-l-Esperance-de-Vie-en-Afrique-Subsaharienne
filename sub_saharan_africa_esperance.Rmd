@@ -1,0 +1,1088 @@
+---
+title: "sub_saharan_africa_esperance"
+author: "AKANHO_Naofal"
+date: "2025-01-30"
+output: 
+  html_document:
+    toc: true
+    toc_float: true
+    number_sections: true
+editor_options: 
+  markdown: 
+    wrap: 80
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Introduction
+
+L'espérance de vie est un indicateur fondamental du développement humain,
+reflétant la qualité de vie, l'accès aux soins de santé et les conditions
+socio-économiques d'une population. Dans les pays d'Afrique subsaharienne, cet
+indicateur varie considérablement en raison de multiples facteurs, notamment
+l'accès aux infrastructures médicales, les niveaux d'éducation, le revenu par
+habitant et l'impact des maladies infectieuses. Cette étude vise à analyser les
+déterminants de l'espérance de vie dans cette région, en exploitant un ensemble
+de données issues de sources fiables. À travers des méthodes d'analyse
+statistique et de modélisation, nous chercherons à identifier les variables les
+plus influentes et à dégager des tendances pouvant orienter les politiques
+publiques en matière de santé et de développement.
+
+# Matériels et Méthodes
+
+1.  Données :
+
+**Source** : Kaggle :
+<https://www.kaggle.com/datasets/mjshri23/life-expectancy-and-socio-economic-world-bank>
+
+**Région étudiée** : Afrique subsaharienne
+
+Observations : Données filtrées sur plusieurs années et pays
+
+Variables disponibles : indicateurs économiques, environnementaux et sanitaires
+
+2.  Description des variables
+
+-   **Country Name** : Nom du pays
+
+-   **IncomeGroup** : Classe de revenu du pays
+
+-   **Year** : Année (2001 à 2019 inclut)
+
+-   **Life Expectancy World Bank** : Espérance de vie
+
+-   **Prevalence of Undernourishment** : La prévalence de la sous-alimentation
+    est le pourcentage de la population dont la consommation alimentaire
+    habituelle est insuffissante pour fournir les niveaux d'énergie alimentaire
+    nécessaires au maintien d'une vie normalement active et saine
+
+-   **CO2** : Émissions de CO₂(Celles qui proviennent de la combustion de
+    combustibles fossiles et de la fabrication de ciment)
+
+-   **Health Expenditure %** : Dépenses de santé en % du PIB
+
+-   **Unemployment** : Le chômage fait référence à la part en pourcentage de la
+    population active qui est sans travail mais disponible et à la recherche
+    d'un emploi.
+
+-   **Injuries (Blessures)** : Les AVCI dues aux blessures représentent la perte
+    de santé en raison des blessures, qu'elles soient causées par des accidents,
+    des traumatismes ou d'autres causes.
+
+-   **Communicable** **(Maladies Transmissibles)** : Les AVCI dues aux maladies
+    transmissibles incluent les maladies infectieuses, telles que le paludisme,
+    la tuberculose ou le VIH/SIDA.
+
+-   **NonCommunicable (Maladies Non Transmissibles)** : Les AVCI dues aux
+    maladies non transmissibles incluent des maladies chroniques comme le
+    diabète, les maladies cardiovasculaires et les cancers.
+
+**AVCI** : **Années de Vie Corrigées de l'Incapacité**
+
+L'**AVCI** (**Disability-Adjusted Life Years - DALY** en anglais) est une
+**mesure de la charge globale de morbidité** dans une population. Elle
+représente **la perte totale d'années de vie en bonne santé** due à une maladie,
+une blessure ou un problème de santé.
+
+**Formule de l'AVCI** :
+
+**AVCI = AVP + AVI**
+
+où :
+
+-   **AVP (Années de Vie Perdues)** → Années perdues à cause d'un décès
+    prématuré.
+
+-   **AVI (Années Vécues avec une Incapacité)** → Années vécues avec une maladie
+    ou une incapacité qui réduit la qualité de vie.
+
+### 🔹 **Comment interpréter l'AVCI ?**
+
+-   **1 AVCI = 1 année de vie en bonne santé perdue.**
+
+-   Plus l'AVCI est **élevé**, plus la maladie ou l'accident a un **impact
+    négatif** sur la santé publique.
+
+-   L'AVCI permet aux chercheurs et aux décideurs de **comparer l'impact** de
+    différentes maladies sur une population.
+
+### 🔹 **Exemples concrets**
+
+📌 **Un accident grave** :
+
+-   Une personne devient paralysée après un accident de voiture à **30 ans** et
+    vit jusqu'à **70 ans**.
+
+-   Elle perd **40 années de vie en bonne santé** à cause du handicap → **40
+    AVCI**.
+
+📌 **Une maladie infectieuse** (ex : paludisme) :
+
+-   Si **1000 personnes** meurent prématurément à **40 ans** au lieu de **70
+    ans**, cela représente **30 000 AVP**.
+
+-   Si **5000 personnes** souffrent de séquelles pendant **5 ans** avec un
+    impact modéré (0.5 de gravité), cela fait **12 500 AVI**.
+
+-   **AVCI total** = 30 000 + 12 500 = **42 500 AVCI**.
+
+# Code et Discussions
+
+## Chargement des données
+
+```{r}
+library(readr)
+library(car) 
+data <- read_csv("data.csv", show_col_types = FALSE)
+```
+
+## Exploration des données
+
+### Vérification des valeurs manquantes
+
+```{r}
+library(ggplot2)
+
+# Calculer le nombre de valeurs manquantes par colonne
+missing_data <- data.frame(
+  variable = names(data),
+  missing_count = colSums(is.na(data))
+)
+
+# Barplot avec annotations des valeurs manquantes
+ggplot(missing_data, aes(x = reorder(variable, -missing_count), y = missing_count)) +
+  geom_bar(stat = "identity", fill = "skyblue") +
+  geom_text(aes(label = missing_count), hjust = -0.3, color = "black") +  # Ajouter le texte
+  labs(title = "Nombre de valeurs manquantes par variable", x = "Variable", y = "Valeurs manquantes") +
+  theme_minimal() +
+  coord_flip()  # Inverser les axes
+```
+
+**Constat** : Il y a pas de valeurs manquantes.
+
+```{r}
+dim(data)
+```
+
+**Constat** : Dans notre base de donnée nous avions 589 observations et 16
+variables.
+
+```{r}
+# Nombre de pays (N)
+library(dplyr)
+N <- data %>%
+  distinct(`Country`) %>%
+  nrow()
+
+# Nombre d'années (T)
+T <- data %>%
+  distinct(Year) %>%
+  nrow()
+
+# Affichage des résultats
+cat("Nombre de pays (N) :", N, "\n")
+cat("Nombre d'années (T) :", T, "\n")
+cat("Taille totale du panel (N x T) :", N * T, "\n")
+
+```
+
+### Statistiques descriptives
+
+```{r}
+summary(data)
+```
+
+**Observations** :
+
+1\. **Year** : Les années vont de 2001 à 2019. La médiane et la moyenne sont
+2010, indiquant une répartition uniforme des données sur cette période.
+
+2\. **Life Expectancy World Bank (Espérance de vie)** : L'espérance de vie
+minimale est de 40,37 ans, tandis que la maximale est de 74,51 ans. La moyenne
+est de 57,52 ans, avec un premier quartile à 52,31 ans, ce qui montre que la
+majorité des pays a une espérance de vie inférieure à 60 ans.
+
+3\. **Prevalence of Undernourishment (Prévalence de la sous-alimentation)** : La
+sous-alimentation varie fortement, de 3,10 % à 67,50 %, avec une moyenne de
+20,02 %. Le premier quartile est à 10,60 %, donc 25 % des pays ont une
+prévalence de sous-alimentation très faible. En revanche, la valeur maximale
+(67,5 %) montre que certains pays sont sévèrement touchés par la faim.
+
+4\. **CO2 (Émissions de CO₂ en tonnes)** : Les émissions vont de 50 tonnes à un
+maximum de 447 930 tonnes, ce qui révèle une disparité importante entre les
+pays. La médiane est de 3 570 tonnes, indiquant que 50 % des pays émettent des
+quantités relativement faibles. Cependant, la moyenne est de 20 876 tonnes,
+influencée par des valeurs maximales très élevées.
+
+5\. **Health Expenditure % (Dépenses de santé en pourcentage du PIB)** : Les
+dépenses varient de 2,39 % à 20,41 %, avec une moyenne de 5,54 %. Le troisième
+quartile est à 6,85 %, indiquant que 75 % des pays dépensent moins de 7 % de
+leur PIB pour la santé.
+
+6\. **Unemployment (Chômage)** : Le taux de chômage varie de 0,6 % à 34,6 %. La
+médiane est de 5,53 %, mais la moyenne est plus élevée à 8,81 %, ce qui suggère
+que certains pays affichent des taux de chômage très élevés, influençant la
+moyenne.
+
+7\. **Injuries (Blessures)** : Le nombre de blessures va de 3 268 à 5 966 517.
+La médiane est de 440 064, et la moyenne est de 824 675, encore une fois
+influencée par quelques pays ayant des valeurs extrêmement élevées.
+
+8\. **Communicable (Maladies transmissibles)** : Les maladies transmissibles
+varient de 16 170 à 103 785 391. La médiane est de 5 434 699, ce qui indique que
+la majorité des pays ont des charges significatives de maladies transmissibles.
+
+9\. **NonCommunicable (Maladies non transmissibles)** : Ces maladies vont de 24
+499 à 31 050 076. La médiane est de 1 993 660, montrant que les maladies non
+transmissibles représentent une charge importante dans la plupart des pays.
+
+**On peut conclure** :
+
+**Disparités importantes** : Les données montrent de grandes disparités entre
+les pays, notamment en termes de CO₂, chômage, et santé.
+
+**Inégalités de santé** : La prévalence de la sous-alimentation et l'espérance
+de vie varient fortement, ce qui reflète des inégalités importantes.
+
+**Charge de maladies** : Les maladies transmissibles dominent dans certains
+pays, mais les maladies non transmissibles sont aussi préoccupantes.
+
+## Préparer les données pour l'analyse de panel :
+
+```{r}
+library(dplyr)
+
+panel_data <- data %>%
+  mutate(
+    `Country` = as.factor(Country),  # Convertir en facteur (correct)
+    IncomeGroup = as.factor(IncomeGroup),       
+    Year = as.numeric(Year)                     
+  )
+
+```
+
+## Transformer les Données en Format Panel
+
+```{r}
+library(plm)
+colnames(panel_data) <- gsub(" ", "_", colnames(panel_data))
+panel_data <- pdata.frame(panel_data, index = c("Country", "Year"))
+
+```
+
+## Visualisations Exploratoires
+
+### Scatterplot avec lissage pour Life_Expectancy_World_Bank vs Year par Country
+
+```{r}
+scatterplot(Life_Expectancy_World_Bank ~ Year | Country, boxplots=FALSE, smooth=TRUE, reg.line=FALSE, data=panel_data)
+
+```
+
+Cette visualisation montre l'évolution du **Life_Expectancy_World_Bank** sous
+forme de boîtes à moustaches (boxplots) de 2010 à 2019.
+
+**Observation** :
+
+L'espérance de vie a tendance à augmenter progressivement au fil des années. La
+médiane (ligne dans chaque boîte) montre une hausse constante.
+
+**Présence d'outliers** :
+
+-   Il y a des valeurs aberrantes (outliers) visibles en haut du graphique.
+
+-   Ces valeurs semblent être des pays ayant une espérance de vie très élevée
+    par rapport à la majorité.
+
+**Conclusion** :
+
+L'espérance de vie suit une tendance haussière sans fluctuations majeures.
+
+### **Plotmeans pour détecter l'hétérogénéité à travers les pays**
+
+```{r}
+library(gplots)
+plotmeans(Life_Expectancy_World_Bank ~ Country, main="Hétérogénéité de l'espérance de vie par pays", data=panel_data)
+
+```
+
+**Observation** :
+
+L'espérance de vie varie fortement d'un pays à l'autre.
+
+On peut soupçonner des effets spécifiques entre les pays.
+
+### **Plotmeans pour détecter l'hétérogénéité à travers les années**
+
+```{r}
+plotmeans(Life_Expectancy_World_Bank ~ Year, main="Hétérogénéité de l'espérance de vie par année", data=panel_data)
+```
+
+**Observations :**
+
+1.  **Tendance générale** : L'espérance de vie montre une augmentation
+    progressive de 2001 à 2019.
+
+2.  **Dispersion des données** : Les barres d'erreur (en bleu) indiquent une
+    hétérogénéité de l'espérance de vie pour chaque année, suggérant une
+    variabilité entre les pays d'Afrique subsaharienne.
+
+3.  **Évolution de la variabilité** : La dispersion semble être plus grande au
+    début (2000-2010) et se réduit légèrement après 2010, ce qui pourrait
+    indiquer une convergence progressive des espérances de vie entre les pays.
+
+### **Analyse de Corrélation**
+
+#### **Sélection des variables numériques pour l'analyse de corrélation**
+
+```{r}
+var_numerique = data %>% 
+  select(
+    "Life Expectancy World Bank",
+    "Prevelance of Undernourishment",
+    CO2,
+    "Health Expenditure %",
+    Unemployment,
+    Injuries,
+    Communicable,
+    NonCommunicable
+  )
+```
+
+#### **Calcul de la matrice de corrélation**
+
+```{r}
+cor_matrix <- cor(var_numerique, use = "complete.obs")
+
+```
+
+#### **Affichage de la matrice de corrélation**
+
+```{r}
+print(cor_matrix)
+
+```
+
+#### **Visualisation de la matrice de corrélation avec corrplot**
+
+```{r}
+library(corrplot)
+corrplot(cor_matrix, method = "color", type = "upper",
+         tl.col = "black", tl.srt = 45,
+         addCoef.col = "black", # Ajoute les coefficients
+         number.cex = 0.7,
+         title = "Matrice de Corrélation des Variables",
+         mar = c(0,0,1,0))
+```
+
+#### Gestion des Variables AVCI
+
+Les trois variables (Injuries,Communicable,NonCommunicable)
+
+#### Vérification et Quantification de la Multicolinéarité
+
+```{r}
+library(car)
+vif(lm(Life_Expectancy_World_Bank ~ Injuries + Communicable + NonCommunicable + 
+         Prevelance_of_Undernourishment + CO2 + Health_Expenditure_. + Unemployment, 
+       data = panel_data))
+
+```
+
+**Observation :**
+
+-   **Injuries (22.5)**, **Communicable (10.2)** et **NonCommunicable (26.8)**
+    ont des VIF très élevés (**\> 10**), ce qui confirme une **forte
+    multicolinéarité**.
+
+-   Les autres variables ont des VIF acceptables (**\< 5**), donc elles ne
+    posent pas de problème.
+
+#### Solution :
+
+Plusieurs options s'offre à nous :
+
+--------------------------------------------------------------------------------
+
+🔹 **1. Faire une somme des trois variables**
+(`Injuries + Communicable + NonCommunicable`)
+
+💡 **Idée :** Tu crées une nouvelle variable comme étant la **somme brute** des
+trois.
+
+📌 **Problèmes :**
+
+-   **Suppose que toutes les variables ont le même poids**, ce qui n'est pas
+    forcément vrai.
+
+-   **Ne corrige pas la colinéarité**, car elle persiste toujours dans les
+    données.
+
+-   **Ne tient pas compte des échelles différentes** (ex. `Injuries` pourrait
+    être plus grand que `Communicable`, donc influencer plus le résultat).
+
+📊 **Quand l'utiliser ?**\
+✅ Si toutes les variables ont un **impact équivalent** et sont **exprimées dans
+la même unité**.\
+❌ Si elles ont des corrélations élevées et des unités différentes, cela peut
+biaiser le modèle.
+
+--------------------------------------------------------------------------------
+
+🔹 **2. Utiliser une PCA pour créer une nouvelle variable**
+
+💡 **Idée :** La PCA va transformer les variables en **composantes
+principales**, en essayant de **maximiser la variance expliquée**.
+
+📌 **Avantages :**
+
+-   **Corrige la colinéarité** en regroupant l'information de manière optimisée.
+
+-   **Attribue un poids différent à chaque variable** (selon leur importance
+    statistique).
+
+-   **Standardise les variables** pour éviter qu'une seule variable domine la
+    nouvelle composante.
+
+-   **Réduit la redondance** tout en conservant l'essentiel des informations.
+
+📊 **Comment ça marche ?**\
+La **première composante principale (PC1)** est une combinaison linéaire des
+trois variables, pondérée de manière optimale
+
+--------------------------------------------------------------------------------
+
+🔹 **3. Utiliser la régression Ridge ou Lasso**
+
+💡 **Idée :** Ces techniques pénalisent les variables trop corrélées, évitant
+d'en privilégier une seule
+
+✅ **Option : Faire une Analyse en Composantes Principales (PCA) :** Regrouper
+ces variables en une seule composante
+
+-   Crée une **nouvelle variable unique** qui résume les trois (Injuries,
+    Communicable et NonCommunicable).
+
+```{r}
+library(FactoMineR)
+pca_result <- PCA(panel_data[, c("Injuries", "Communicable", "NonCommunicable")], scale.unit = TRUE)
+pca_result
+```
+
+```{r}
+pca_scores <- pca_result$ind$coord[,1]  # Première composante principale
+panel_data$Health_Risk_Index <- pca_scores  # Nouvelle variable
+```
+
+📌 **Interprétation :**
+
+-   `Health_Risk_Index` est une **nouvelle variable** qui représente au mieux
+    l'effet combiné de `Injuries`, `Communicable` et `NonCommunicable`, en
+    tenant compte de leurs corrélations et pondérations.
+
+-   Cette nouvelle variable **réduit la dimensionnalité** tout en minimisant la
+    perte d'information.
+
+```{r}
+library(car)
+vif(lm(Life_Expectancy_World_Bank ~ Prevelance_of_Undernourishment + CO2 + Health_Expenditure_. + Unemployment+ Health_Risk_Index, 
+       data = panel_data))
+```
+
+**Observation** : Le problème de multicolinéarité a été résolu.
+
+Tous les VIF sont inférieurs à 5, ce qui signifie que le modèle ne présente plus
+de multicolinéarité problématique.
+
+```{r}
+numerique = panel_data %>% 
+  select(
+    Life_Expectancy_World_Bank,
+    Prevelance_of_Undernourishment,
+    CO2,
+    Health_Expenditure_.,
+    Unemployment,
+    Health_Risk_Index
+  )
+```
+
+```{r}
+matrix_correlation <- cor(numerique, use = "complete.obs")
+
+```
+
+```{r}
+library(corrplot)
+corrplot(matrix_correlation, method = "color", type = "upper",
+         tl.col = "black", tl.srt = 45,
+         addCoef.col = "black", # Ajoute les coefficients
+         number.cex = 0.7,
+         title = "Matrice de Corrélation des Variables",
+         mar = c(0,0,1,0))
+```
+
+### Retrait des variables correlées
+
+```{r}
+library(dplyr)
+panel <- panel_data %>%
+  select(-Injuries, -Communicable, -NonCommunicable)
+```
+
+# Modélisation :
+
+## Vérifier la stationnarité des variables
+
+-   Si toutes les variables sont stationnaires (I(0)), un **panel simple** est
+    suffisant.
+
+-   Si certaines sont I(0)et d'autres I(1), alors un **ARDL panel** peut être
+    plus adapté. ✅ **Si elles sont** I(1) et co-intégrées, on utilise un ARDL
+    panel.\
+    ✅ **Si elles sont** I(1) mais non co-intégrées, on peut penser à
+    différencier ou utiliser un GMM.
+
+    ```{r}
+    library(tseries)
+    # Sélectionner uniquement les colonnes numériques (exclure les ID, noms, etc.)
+    numerical_cols <- names(panel)[sapply(panel, is.numeric)]
+
+    # Fonction pour tester la stationnarité avec ADF et KPSS
+    test_stationnarite <- function(col) {
+      adf_pvalue <- adf.test(panel[[col]], alternative = "stationary")$p.value
+
+      adf_result <- ifelse(adf_pvalue < 0.05, "Stationnaire", "Non Stationnaire")
+
+      return(data.frame(Variable = col, ADF = adf_result))
+    }
+
+    # Appliquer le test sur toutes les variables numériques
+    resultats_stationnarite <- do.call(rbind, lapply(numerical_cols, test_stationnarite))
+
+    # Afficher les résultats
+    print(resultats_stationnarite)
+    ```
+
+    **Conclusion** : Toute nos variables sont stationnaires, on peut effectuer
+    un panel simple sur nos données.
+
+## **Estimation du modèle Pooled**
+
+```{r}
+pooled_model <- plm(Life_Expectancy_World_Bank ~ 
+                      Prevelance_of_Undernourishment + 
+                      CO2 + 
+                      Health_Expenditure_. + 
+                      Unemployment + 
+                      Health_Risk_Index + 
+                      IncomeGroup, 
+                    data = panel, 
+                    model = "pooling")
+summary(pooled_model)
+```
+
+### 📊 **Interprétation des résultats**
+
+1.  **Significativité des variables**
+
+    -   `Prevalence_of_Undernourishment` (**p \< 2.2e-16**): Fortement
+        significatif, impact négatif sur l'espérance de vie, ce qui suggère
+        qu'une plus grande prévalence de la sous-alimentation est associée à une
+        espérance de vie plus faible.
+
+    -   `Unemployment` (**p \< 2.2e-16**): Négatif et significatif, donc plus de
+        chômage réduit l'espérance de vie autrement dit des taux de chômage plus
+        élevés sont associés à une espérance de vie plus courte.
+
+    -   `Health_Risk_Index` (**p = 5.030e-07**): Négatif et significatif, ce qui
+        est logique,une valeur plus élevée de cet indice semble réduire
+        l'espérance de vie.
+
+    -   `IncomeGroupUpper middle income` (**p = 5.623e-16**): Positif et
+        significatif → un niveau de revenu plus élevé améliore l'espérance de
+        vie autrement dit un groupe de revenu moyen supérieur est associé à une
+        espérance de vie significativement plus élevée.
+
+2.  **Variables non significatives**
+
+    -   `CO2` (**p = 0.9236**) et `Health_Expenditure_.` (**p = 0.9136**) ne
+        sont pas significatifs.
+
+    -   `IncomeGroupLower middle income` (**p = 0.7790**) n'a pas d'effet
+        statistiquement prouvé.
+
+Cela suggère que ces variables ne jouent pas un rôle direct significatif dans
+l'espérance de vie dans ce modèle.
+
+3.  **Qualité du modèle**
+
+    -   **R² = 0.313** → Seulement 31% de la variance de l'espérance de vie est
+        expliquée. D'autres facteurs clés sont peut-être absents.
+
+    -   **F-statistique très significatif** p-value très faible (\< 2.22e-16) →
+        le modèle global est pertinent, c'est-à-dire que les variables prises
+        ensemble ont un pouvoir explicatif pour l'espérance de vie.
+
+**Conclusion** :
+
+Les pays avec un revenu moyen supérieur (**IncomeGrouUppper middle income**)
+ont, en moyenne, une espérance de vie plus
+élevée(**Life_Expectancy_World_Bank**), ce qui est cohérent avec des niveaux de
+développement économique plus avancés. Le chômage(**Unemployment**), la
+sous-alimentation(**Prevelance_of_Undernourishment**) et l'indice de risque
+sanitaire(**Health_Risk_Index**) apparaissent comme des facteurs ayant un effet
+négatif important sur l'espérance de vie, et ces effets sont assez homogènes à
+travers les pays et les années.
+
+La variabilité dans les données résiduelles (les résidus montrent une variation
+notable avec des valeurs allant de -11.59 à 14.64) suggère qu'il pourrait y
+avoir des effets spécifiques aux pays ou aux périodes non capturés dans ce
+modèle simple.
+
+Un modèle avec des **effets fixes** ou **aléatoires** pourrait donner une
+meilleure vue d'ensemble sur les différences entre les pays et les années, en
+tenant compte de ces spécificités, en particulier si on est intéressé par
+l'évolution de l'espérance de vie au fil du temps pour chaque pays.
+
+## **Modèle à Effets Fixes (Fixed Effects) via dummies variables**
+
+```{r}
+fixed.dum = lm(Life_Expectancy_World_Bank ~ 
+                      Prevelance_of_Undernourishment + 
+                      CO2 + 
+                      Health_Expenditure_. + 
+                      Unemployment + 
+                      Health_Risk_Index + 
+                      IncomeGroup + factor(Country), data = panel)
+summary(fixed.dum)
+```
+
+### 📊 **Interprétation des résultats**
+
+1\. **Intercept (Constante)**
+
+-   **Estimate**: 65.65
+
+-   **Interprétation**: Lorsque toutes les variables explicatives sont égales à
+    zéro (ce qui peut ne pas avoir de sens concret ici, notamment pour les
+    variables comme le pays), l'espérance de vie (Life_Expectancy_World_Bank)
+    serait de 65.65. Cependant, cela n'a pas de réelle signification pratique,
+    car cela implique un état fictif où toutes les autres variables sont nulles.
+
+2\. **Variables explicatives** :
+
+-   **Prevalence_of_Undernourishment (Prévalence de la sous-nutrition)** :
+
+    -   **Estimate**: -0.2726
+
+    -   **Interprétation**: Un accroissement de la sous-nutrition de 1 unité est
+        associé à une diminution de l'espérance de vie de 0.2726 années, toutes
+        choses égales par ailleurs.Le p-value extrêmement faible (\<2e-16)
+        montre que cet effet est statistiquement significatif.
+
+-   **CO2 (Émissions de CO2)** :
+
+    -   **Estimate**: 0.0001424
+
+    -   **Interprétation**: Chaque augmentation d'une unité des émissions de CO2
+        est associée à une augmentation de 0.0001424 années de l'espérance de
+        vie, toutes choses égales par ailleurs. Ce qui peut sembler
+        contre-intuitif, mais peut être dû à des facteurs indirects qui ne sont
+        pas immédiatement apparents.Bien que l'effet soit faible, il est
+        statistiquement significatif avec un p-value très bas (8.74e-11).
+
+-   **Health_Expenditure\_ (Dépenses de santé)** :
+
+    -   **Estimate**: 0.5519
+
+    -   **Interprétation**: Une augmentation d'une unité des dépenses de santé
+        est associée à une augmentation de 0.5519 années de l'espérance de vie,
+        toutes choses égales par ailleurs. L'effet est très significatif
+        (p-value = 1.62e-06).
+
+-   **Unemployment (Taux de chômage)** :
+
+    -   **Estimate**: -0.3711
+
+    -   **Interprétation**: Une augmentation du taux de chômage est associée à
+        une diminution de l'espérance de vie de 0.3711 années. Cet effet est
+        également statistiquement significatif (p-value = 0.000249).
+
+-   **Health_Risk_Index (Indice de risque sanitaire)** :
+
+    -   **Estimate**: 3.900
+
+    -   **Interprétation**: Une augmentation de l'indice de risque sanitaire de
+        1 unité est associée à une augmentation de l'espérance de vie de 3.900
+        années, toutes choses égales par ailleurs.Ce qui peut sembler
+        contre-intuitif, mais peut être dû à des facteurs indirects qui ne sont
+        pas immédiatement apparents.
+
+-   **IncomeGroup (Groupe de revenu)** :
+
+    -   **Estimate**: pour les groupes de revenu "Lower middle income" et "Upper
+        middle income", il y a des réductions significatives de l'espérance de
+        vie par rapport aux pays à revenu élevé. Par exemple, pour "Upper middle
+        income", l'espérance de vie diminue de 68.01 ans.
+
+3\. **Effets fixes des pays (factor(Country))** :
+
+-   Les coefficients des pays représentent l'effet spécifique de chaque pays sur
+    l'espérance de vie, par rapport au pays de référence qui est **Angola**.
+
+-   **Pays significatifs** : De nombreux pays comme le **Botswana**, **Gabon**,
+    **Maurice**, **Sénégal**, **Sierra Leone** montrent des coefficients
+    significatifs, suggérant que l'espérance de vie dans ces pays est
+    statistiquement différente de la moyenne.
+
+-   **Pays non significatifs** : Certains pays comme **South Africa** et
+    **Togo** ont des valeurs manquantes (NA), ce qui signifie que ces pays sont
+    probablement exclus du modèle ou souffrent de multicolinéarité.
+
+4\. **Autres statistiques** :
+
+-   **Residual standard error (Erreur standard des résidus)** : 3.424, ce qui
+    indique l'écart-type des erreurs de prédiction.
+
+-   **Multiple R-squared** : 0.7745, ce qui signifie que 77.45% de la variance
+    de l'espérance de vie est expliquée par le modèle.
+
+-   **Adjusted R-squared** : 0.7602, qui ajuste R² en fonction du nombre de
+    variables explicatives, offrant ainsi une meilleure estimation de la qualité
+    du modèle.
+
+5\. **Significativité du modèle global** :
+
+-   **F-statistic** : 54.26 avec un p-value extrêmement faible (\< 2.2e-16),
+    indiquant que le modèle est significatif dans son ensemble.
+
+**Conclusion** :
+
+Le modèle montre que plusieurs facteurs, notamment la sous-nutrition, les
+émissions de CO2, les dépenses de santé et le chômage, influencent de manière
+significative l'espérance de vie. De plus, l'analyse des effets fixes par pays
+montre qu'il existe des différences significatives entre les pays en termes
+d'espérance de vie, ce qui justifie l'inclusion de ces effets pour contrôler les
+spécificités nationales.
+
+## **Modèle à Effets Fixes (Fixed Effects) via plm**
+
+```{r}
+fe_model <- plm(Life_Expectancy_World_Bank ~ 
+                  Prevelance_of_Undernourishment + 
+                  CO2 + 
+                  Health_Expenditure_. + 
+                  Unemployment + 
+                  Health_Risk_Index + 
+                  IncomeGroup,
+                data = panel, 
+                model = "within")  
+summary(fe_model)
+
+```
+
+### 📊 **Interprétation des résultats**
+
+Chaque coefficient représente l'**effet moyen d'une variation d'une unité de la
+variable explicative sur l'espérance de vie**, **en contrôlant les effets
+spécifiques aux pays**.
+
+-   **Prevalence_of_Undernourishment (-0.2726, p \< 0.001)**\
+    → Une augmentation de 1 point de pourcentage de la prévalence de la
+    sous-alimentation est associée à une baisse de **0.273 années** d'espérance
+    de vie. Cet effet est **très significatif** (p \< 0.001).
+
+-   **CO2 (0.000142, p \< 0.001)**\
+    → Une augmentation de 1 unité des émissions de CO₂ est associée à une **très
+    légère augmentation de l'espérance de vie (+0.000142 années)**. Cet effet
+    est **statistiquement significatif** mais économiquement très faible.
+
+-   **Health_Expenditure\_. (0.552, p \< 0.001)**\
+    → Une augmentation de 1% des dépenses de santé par rapport au PIB est
+    associée à une **augmentation de 0.55 années d'espérance de vie**. Cela
+    indique que l'investissement dans la santé améliore significativement
+    l'espérance de vie.
+
+-   **Unemployment (-0.371, p = 0.000249)**\
+    → Une augmentation de 1 point de pourcentage du chômage est associée à une
+    baisse de **0.37 années** d'espérance de vie. Cela peut s'expliquer par le
+    stress, l'accès réduit aux soins et d'autres facteurs liés à l'emploi.
+
+-   **Health_Risk_Index (3.90, p = 0.0024)**\
+    → Une augmentation de **1 point** de cet indice de risque sanitaire est
+    associée à une hausse de **3.90 ans d'espérance de vie**. Cela peut sembler
+    contre-intuitif, mais cela pourrait être dû à une corrélation avec d'autres
+    facteurs (exemple : des pays avec un bon système de santé pourraient aussi
+    mieux détecter et surveiller les risques).
+
+--------------------------------------------------------------------------------
+
+**Signification globale du modèle**
+
+-   **R² = 0.2914** :\
+    → Cela signifie que **29.14% de la variance de l'espérance de vie** est
+    expliquée par les variables du modèle. C'est un niveau modéré, ce qui
+    signifie que d'autres facteurs non inclus dans le modèle jouent un rôle
+    important.
+
+-   **F-statistic = 45.49, p \< 2.2e-16** :\
+    → Ce test confirme que l'ensemble des variables explicatives a un effet
+    significatif sur l'espérance de vie.
+
+--------------------------------------------------------------------------------
+
+### **Conclusion**
+
+✅ **Variables les plus influentes** :
+
+-   **Dépenses de santé (+)** et **sous-alimentation (-)** sont les facteurs les
+    plus influents sur l'espérance de vie.
+
+⚠️ **Résultats contre-intuitifs** :
+
+-   L'effet légèrement positif du CO₂ est surprenant. Il pourrait refléter une
+    relation indirecte (par exemple, les pays développés émettent plus de CO₂
+    mais ont aussi une meilleure espérance de vie).
+
+🔍 **Améliorations possibles** :
+
+-   Tester d'autres modèles (effets aléatoires, variables instrumentales) pour
+    valider la robustesse des résultats.
+
+-   Ajouter d'autres variables
+
+### **Afficher les effets fixes**
+
+```{r}
+fixef(fe_model)
+
+```
+
+### 📊 **Analyse des effets fixes par pays :**
+
+✅ **Pays avec les effets fixes les plus élevés :**
+
+-   **Maurice (78.92), São Tomé-et-Principe (75.88), Gabon (74.53), Botswana
+    (73.23), Madagascar (72.14)**\
+    → Ces pays ont une **espérance de vie systématiquement plus élevée** par
+    rapport aux autres, même après contrôle des facteurs comme la
+    sous-alimentation, les dépenses de santé, etc.\
+    **Explication possible :** meilleure infrastructure de santé, politiques
+    publiques efficaces, niveau de vie plus élevé.
+
+⚠️ **Pays avec des effets fixes moyens :**
+
+-   **Bénin (62.54), Ghana (61.72), Kenya (61.60), Lesotho (61.86), Angola
+    (60.49)**\
+    → Ces pays ont une **espérance de vie conforme aux attentes du modèle**,
+    sans déviation majeure.
+
+❌ **Pays avec les effets fixes les plus faibles :**
+
+-   **Nigeria (8.92), Afrique du Sud (-2.36)**\
+    → Ces pays ont une **espérance de vie bien plus basse que prévu**, même
+    après contrôle des variables explicatives.\
+    **Explication possible :**
+
+    -   Pour le Nigeria : conflits, pauvreté élevée, accès limité aux soins.
+
+    -   Pour l'Afrique du Sud : fort impact du VIH/SIDA, inégalités de santé,
+        violence élevée.
+
+## **Choix du modèle**
+
+### **Sélection de Modèle : POOLED OLS OR FIXED?**
+
+#### **Test Fisher : comparaison Fixed Effects vs OLS**
+
+```{r}
+library(plm)
+pFtest(fe_model, pooled_model)
+
+```
+
+#### 📊 **Interprétation des résultats**
+
+Le test de Fisher pour les effets individuels a produit une statistique F de
+40,41 avec des degrés de liberté de 28 et 553, et une p-value très faible
+(inférieure à 2,2e-16). Cette p-value indique que l'hypothèse nulle (selon
+laquelle il n'y a pas d'effets individuels significatifs) peut être rejetée.
+
+En d'autres termes, les résultats suggèrent qu'il existe des effets fixes
+significatifs , ce qui signifie que les différences entre les pays jouent un
+rôle important dans l'explication de la variable dépendante(l'espérance de vie).
+
+On peut conclure qu'**il est pertinent d'utiliser un** **modèle à effets fixes**
+plutôt qu'un modèle à pooled.
+
+### **Sélection de Modèle : FIXED OR RANDOM?**
+
+#### **Modèle à Effets Aléatoires (Random Effects) via plm**
+
+```{r}
+re_model <- plm(Life_Expectancy_World_Bank ~ 
+                  Prevelance_of_Undernourishment +
+                  CO2 + 
+                  Health_Expenditure_. + 
+                  Unemployment + 
+                  Health_Risk_Index + 
+                  IncomeGroup,
+                data = panel, 
+                model = "random")  
+summary(re_model)
+```
+
+#### **Test de Hausman : comparaison Fixed effects vs Random effets**
+
+```{r}
+hausman_test <- phtest(fe_model, re_model)
+hausman_test
+```
+
+**Conclusion :**
+
+L'hypothèse nulle du test de Hausman stipule que les effets aléatoires sont plus
+appropriés, c'est-à-dire que les variables explicatives ne sont pas corrélées
+avec les effets individuels.
+
+Toutefois, ici, la **p-value est très faible**, ce qui signifie que nous
+**rejetons l'hypothèse nulle**. Autrement dit, le modèle à **effets aléatoires
+est biaisé et incohérent**, et **le modèle à effets fixes est préférable**.
+
+En somme le modèle le plus adapté pour ce data_panel est le **modèle à effet
+fixe**.
+
+## **Analyse de l'Importance des Effets Temporels 🕒**
+
+### **Estimation du modèle à effets fixes temporel**
+
+```{r}
+fe_model_time <- plm(Life_Expectancy_World_Bank ~ 
+                           Prevelance_of_Undernourishment + 
+                           CO2 + 
+                           Health_Expenditure_. + 
+                           Unemployment + 
+                           Health_Risk_Index + 
+                           IncomeGroup + factor(Year),
+                         data = panel)  # Effets fixes temporels uniquement
+
+summary(fe_model_time)
+
+```
+
+### **Comparaison des Modèles avec et sans Effets Temporels**
+
+-   Hypothèse nulle (H0) : Les effets fixes temporels ne sont pas nécessaires.
+
+```{r}
+pFtest(fe_model_time,fe_model)
+
+```
+
+**📌 Interprétation du Test de Fisher (`pFtest`) entre `fe_model_time` et
+`fe_model`**
+
+Ce test compare **le modèle à effets fixes temporels (`fe_model_time`)** avec
+**le modèle à effets fixes individuels (`fe_model`)** pour vérifier si les
+**effets fixes temporels sont significatifs**.
+
+--------------------------------------------------------------------------------
+
+**📊 Résultats du test :**
+
+-   **Statistique F = 98.551** → Valeur très élevée, ce qui indique une forte
+    différence entre les modèles.
+
+-   **p-value \< 2.2e-16** → **Très faible (inférieure à 5%)**, donc on
+    **rejette l'hypothèse nulle**.
+
+--------------------------------------------------------------------------------
+
+**📌 Conclusion :**
+
+✅ **Les effets fixes temporels sont significatifs**.\
+➡ **Il faut donc inclure les effets fixes temporels dans le modèle**
+(`fe_model_time`).
+
+Cela signifie que **l'effet du temps joue un rôle important** sur la variable
+dépendante (*Life Expectancy*). Ignorer ces effets reviendrait à omettre une
+composante clé de l'analyse.
+
+--------------------------------------------------------------------------------
+
+**🚀 Que faire ensuite ?**
+
+1️⃣ **Garder `fe_model_time`** comme modèle principal.\
+2️⃣ **Tester les diagnostics** (hétéroscédasticité, autocorrélation, etc.) pour
+s'assurer de la robustesse du modèle.
+
+## **Validation du modèle**
+
+### **Vérification de l'Hétérogénéité**
+
+```{r}
+pcdtest(fe_model_time)
+
+```
+
+On constate qu'il y a pas de dépendance entre les erreurs du modèle (p-value =
+0.1379\>0,05)
+
+### Test d'Hétéroscédasticité (variance non constante)
+
+```{r}
+library(lmtest)
+bptest(fe_model_time)
+```
+
+#### 🔹 **Interprétation :**
+
+-   **p-value \< 0.05** → Présence d'hétéroscédasticité → On devra utiliser des
+    erreurs standard robustes pour corriger ce problème.
+
+
+```{r}
+library(sandwich)
+robust_se <- sqrt(diag(vcovHC(fe_model_time, type = "HC3", cluster = "group")))
+summary(fe_model_time)
+
+```
+
+### Test d'Autocorrélation des Erreurs
+
+```{r}
+pwartest(fe_model_time)
+```
+
+🔹 **Interprétation :**
+
+-   **p-value \< 0.05** → Présence d'autocorrélation → Il est nécessaire
+    d'ajuster le modèle (par exemple, utiliser des erreurs robustes pour
+    l'autocorrélation).
+    
+###  Correction de l’hétéroscédasticité et l’autocorrélation
+Pour corriger l’hétéroscédasticité et l’autocorrélation dans un modèle de panel, plusieurs approches peuvent être
+utilisées. Une première méthode consiste à appliquer des **erreurs robustes aux hétéroscédasticités et aux corrélations intra-groupes**  , en utilisant des matrices de variance-covariance corrigées comme **Arellano** ou des erreurs clusterisées
+par individu ou par période **(vcovHC)**. Une seconde approche repose sur la transformation des variables, notamment
+par différenciation pour éliminer la structure d’autocorrélation. Enfin, dans le cas où la dépendance temporelle est
+forte, un modèle de panel dynamique, comme le **GMM d’Arellano-Bond**, permet de prendre en compte à la fois
+l’autocorrélation et les problèmes d’endogénéité en utilisant des instruments appropriés. Le choix de la méthode dépend
+du degré et de la nature des distorsions détectées à travers des tests comme Breusch-Pagan pour l’hétéroscédasticité et
+Wooldridge pour l’autocorrélation.
+
+
+# Conclusion
+L’analyse en panel menée sur les déterminants de l’espérance de vie en Afrique subsaharienne a mis en évidence des disparités
+significatives entre les pays et les années. À travers différentes approches de modélisation, nous avons identifié des facteurs clés
+influençant l’espérance de vie, notamment la sous-alimentation, le chômage et les dépenses de santé. L’importance des effets
+fixes a été démontrée, indiquant que des caractéristiques spécifiques à chaque pays jouent un rôle majeur dans l’évolution de cet
+indicateur.
+Nos résultats soulignent que l’amélioration de l’espérance de vie passe par une augmentation des investissements en santé
+publique et une réduction des inégalités socio-économiques. Les politiques publiques devraient ainsi se concentrer sur des
+stratégies de réduction du chômage et de lutte contre la sous-alimentation pour favoriser une meilleure qualité de vie dans la
+région.
+En perspective, des études complémentaires intégrant d’autres variables structurelles et des techniques économétriques
+avancées, comme les modèles dynamiques ou les méthodes de correction des effets endogènes, pourraient affiner ces résultats et
+renforcer la robustesse des conclusions obtenues
